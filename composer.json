@@ -1,0 +1,27 @@
+{
+    "name": "ohweb/csv-response",
+    "type": "library",
+    "description": "",
+    "homepage": "https://github.com/ohweb/csv-response",
+    "license": "New BSD",
+    "authors": [
+		{
+			"name": "Vladislav Hejda",
+			"email": "hejda@vspdata.cz",
+			"role": "Developer"
+		},
+        {
+            "name": "Ondra Hlaváč",
+            "email": "ondra@hlavac.cz",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "nette/nette": ">=2.0.0"
+    },
+	"autoload": {
+		"psr-4": {
+			"OHWeb\\Application\\Response\\": "src/"
+		}
+	}
+}
