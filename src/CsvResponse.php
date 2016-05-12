@@ -20,6 +20,11 @@ class CsvResponse extends Nette\Object implements Nette\Application\IResponse
 
 
 	/** @var bool */
+	protected $addBom;
+
+
+
+	/** @var bool */
 	protected $addHeading;
 
 
@@ -64,11 +69,12 @@ class CsvResponse extends Nette\Object implements Nette\Application\IResponse
 	 *
 	 * @param array[]|\Traversable $data
 	 * @param string               $filename
-	 * @param bool                 $addHeading whether add first row from data array keys (keys are taken from first row)
+	 * @param bool                 $addHeading	whether add first row from data array keys (keys are taken from first row)
+	 * @param bool                 $addBom		whether byte order mark should be added
 	 *
 	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($data, $filename = 'output.csv', $addHeading = TRUE) {
+	public function __construct($data, $filename = 'output.csv', $addHeading = TRUE, $addBom = FALSE) {
 		if ($data instanceof \Traversable) {
 			$data = iterator_to_array($data);
 		}
@@ -80,6 +86,7 @@ class CsvResponse extends Nette\Object implements Nette\Application\IResponse
 		$this->data = array_values($data);
 		$this->filename = $filename;
 		$this->addHeading = $addHeading;
+		$this->addBom = $addBom;
 	}
 
 
@@ -225,38 +232,57 @@ class CsvResponse extends Nette\Object implements Nette\Application\IResponse
 			}
 			if ($n === 0 && $this->addHeading) {
 				$labels = array_keys($row);
-				if ($this->headingFormatter || $recode) {
+				if ($this->headingFormatter) {
 					foreach ($labels as &$label) {
-						if ($this->headingFormatter) {
-							$label = call_user_func(
-								$this->headingFormatter, $label
-							);
-						}
-						if ($recode) {
-							$label = iconv(
-								'utf-8', "$this->outputCharset//TRANSLIT",
-								$label
-							);
-						}
+						$label = call_user_func(
+							$this->headingFormatter, $label
+						);
 					}
 				}
 				fputcsv($buffer, $labels, $this->glue);
 			}
-			if ($this->dataFormatter || $recode) {
+			if ($this->dataFormatter) {
 				foreach ($row as &$value) {
-					if ($this->dataFormatter) {
-						$value = call_user_func($this->dataFormatter, $value);
-					}
-					if ($recode) {
-						$value = iconv(
-							'utf-8', "$this->outputCharset//TRANSLIT", $value
-						);
-					}
+					$value = call_user_func($this->dataFormatter, $value);
 				}
 			}
 			fputcsv($buffer, $row, $this->glue);
 		}
 		fclose($buffer);
-		return ob_get_clean();
+		$output = ob_get_clean();
+
+		if ($recode) {
+			$output = iconv('utf-8', "$this->outputCharset//TRANSLIT", $output);
+		}
+
+		if ($this->addBom) {
+			$output = $this->getBom() . $output;
+		}
+		return $output;
+	}
+
+
+
+	/**
+	 * @see http://en.wikipedia.org/wiki/Byte_order_mark#Representations_of_byte_order_marks_by_encoding
+	 */
+	protected function getBom()
+	{
+		$boms = array(
+			'utf-8' => "\xEF\xBB\xBF",
+			'utf-16be' => "\xFE\xFF",
+			'utf-16le' => "\xFF\xFE",
+			'utf-32be' => "\x00\x00\xFE\xFF",
+			'utf-32le' => "\xFF\xFE\x00\x00",
+			'utf-7' => "\x2B\x2F\x76\x38", // one of many
+			'utf-1' => "\xF7\x64\x4C",
+			'utf-ebcdic' => "\xDD\x73\x66\x73",
+			'scsu' => "\x0E\xFE\xFF",
+			'bocu-1' => "\xFB\xEE\x28",
+			'bg-18030' => "\x84\x31\x95\x33",
+		);
+		$charset = strtolower($this->outputCharset);
+
+		return isset($boms[$charset]) ? $boms[$charset] : null;
 	}
 }
