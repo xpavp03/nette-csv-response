@@ -1,5 +1,5 @@
 {
-    "name": "ohweb/nette-csv-response",
+    "name": "xpavp03/nette-csv-response",
     "type": "library",
     "description": "Nette CSV response",
     "homepage": "https://github.com/ohweb/nette-csv-response",
@@ -13,6 +13,11 @@
         {
             "name": "Ondra Hlaváč",
             "email": "ondra@hlavac.cz",
+            "role": "Developer"
+        },
+        {
+            "name": "Petr 'PePa' Pavel",
+            "email": "petr.pavel@pepa.info",
             "role": "Developer"
         }
     ],
